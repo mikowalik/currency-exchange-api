@@ -18,7 +18,8 @@ final case class HttpConfig(
 
 final case class Conf(
   apiConfig: ApiConfig,
-  httpConfig: HttpConfig
+  httpConfig: HttpConfig,
+  useCache: Boolean
 )
 
 object Conf {

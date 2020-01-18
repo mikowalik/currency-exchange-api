@@ -2,11 +2,14 @@ package org.exchange
 
 import java.util.concurrent.Executors
 
+import cats.data.{EitherT, OptionT}
 import cats.effect.{ContextShift, IO, Timer}
 import org.exchange.config.Conf
 import org.exchange.logic.ConvertServiceImpl
-import org.exchange.logic.repo.impl.ratesio.OnDemandRateProvider
+import org.exchange.logic.errors.ConvertError
+import org.exchange.logic.repo.impl.ratesio.{CacheBasedRateProvider, OnDemandRateProvider}
 import org.exchange.logic.repo.impl.ratesio.base.HttpBaseRatesProvider
+import org.exchange.logic.repo.impl.ratesio.cache.CacheManager
 import org.exchange.server.endpoints.{ConvertEndpoint, StatusEndpoint}
 import org.http4s.client.{Client, JavaNetClientBuilder}
 import org.http4s.implicits._
@@ -29,7 +32,14 @@ class CompositionRoot(conf: Conf)(implicit cd: ContextShift[IO], timer: Timer[IO
     val convertEndpoint = {
 
       val baseRatesProvider = new HttpBaseRatesProvider(httpClient)
-      val rateProvider = new OnDemandRateProvider(baseRatesProvider)
+      val mockCacheManager = new CacheManager {
+        override def write(base: String, rates: Map[String, BigDecimal]): IO[Unit] = IO.pure(())
+
+        override def read(base: String): IO[Map[String, BigDecimal]] = IO.pure(Map.empty)
+      }
+      val rateProvider =
+        if(conf.useCache) new CacheBasedRateProvider(baseRatesProvider, mockCacheManager)
+        else new OnDemandRateProvider(baseRatesProvider)
       val convertService = new ConvertServiceImpl(rateProvider)
 
       new ConvertEndpoint(convertService)
