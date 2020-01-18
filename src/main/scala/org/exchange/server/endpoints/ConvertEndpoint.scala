@@ -22,7 +22,7 @@ class ConvertEndpoint(convertService: ConvertService) extends Logging {
       case req @ POST -> Root / "api" / "convert" =>
         val action: IO[Either[ConvertError, ConvertOutput]] = for {
           input <- req.as[ConvertInput]
-          result <- convertService.convert(input)
+          result <- convertService.convert(input).value
         } yield result
 
           action

@@ -1,8 +1,10 @@
 package org.exchange.server.endpoints
 
+import cats.data.EitherT
 import cats.effect.IO
 import io.circe.generic.auto._
 import io.circe.parser._
+import org.exchange.TestData
 import org.exchange.logic.ConvertService
 import org.exchange.logic.errors.{ConvertError, ExchangeRatesNotAvailableError}
 import org.exchange.model.{ConvertInput, ConvertOutput}
@@ -18,22 +20,15 @@ import org.scalatest.matchers.should.Matchers
 class ConvertEndpointSpec extends AnyFunSuite
   with Matchers
   with Http4sDsl[IO]
-  with Http4sClientDsl[IO] {
+  with Http4sClientDsl[IO]
+  with TestData {
 
   test("Return correct result from service") {
 
     val expectedConvertOutput = exampleConvertOutput
 
-    val exampleInput = ConvertInput(
-      fromCurrency = "GBP",
-      toCurrency = "EUR",
-      amount = BigDecimal("102.6")
-    )
-
     val mockService = new ConvertService {
-      override def convert(input: ConvertInput): IO[Either[ConvertError, ConvertOutput]] = IO {
-        Right(expectedConvertOutput)
-      }
+      override def convert(input: ConvertInput): EitherT[IO, ConvertError, ConvertOutput] = EitherT.rightT(expectedConvertOutput)
     }
 
     val endpoint = new ConvertEndpoint(mockService).route()
@@ -108,7 +103,7 @@ class ConvertEndpointSpec extends AnyFunSuite
   ) = {
 
     val mockService = new ConvertService {
-      override def convert(input: ConvertInput): IO[Either[ConvertError, ConvertOutput]] = serviceOutput
+      override def convert(input: ConvertInput): EitherT[IO, ConvertError, ConvertOutput] = EitherT(serviceOutput)
     }
 
     val endpoint = new ConvertEndpoint(mockService).route()
