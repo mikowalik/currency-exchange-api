@@ -9,6 +9,7 @@ val logbackVersion = "1.2.3"
 val scalaLogging = "3.9.2"
 val circeVersion = "0.12.3"
 val pureConfigVersion = "0.12.1"
+val scalacacheVersion = "0.28.0"
 
 val scalaCheckVersion = "1.14.3"
 val scalaTestVersion = "3.2.0-M2"
@@ -27,7 +28,11 @@ libraryDependencies ++= Seq(
   "org.http4s" %% "http4s-circe" % http4sVersion,
   "io.circe" %% "circe-generic" % circeVersion,
   "io.circe" %% "circe-literal" % circeVersion,
-  "io.circe" %% "circe-parser" % circeVersion
+  "io.circe" %% "circe-parser" % circeVersion,
+
+  "com.github.cb372" %% "scalacache-core" % scalacacheVersion,
+  "com.github.cb372" %% "scalacache-cats-effect" % scalacacheVersion,
+  "com.github.cb372" %% "scalacache-caffeine" % scalacacheVersion
 )
 
 libraryDependencies ++= Seq(

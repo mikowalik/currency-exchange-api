@@ -16,10 +16,15 @@ final case class HttpConfig(
   readTimeout: FiniteDuration
 )
 
+final case class CacheConfig(
+  use: Boolean,
+  ttl: Option[FiniteDuration]
+)
+
 final case class Conf(
   apiConfig: ApiConfig,
   httpConfig: HttpConfig,
-  useCache: Boolean
+  cacheConfig: CacheConfig
 )
 
 object Conf {

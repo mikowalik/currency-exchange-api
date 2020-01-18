@@ -12,6 +12,7 @@ class CacheBasedRateProvider(
   baseRatesProvider: BaseRatesProvider,
   cacheManager: CacheManager
 ) extends RateProvider with Logging {
+
   override def getRate(from: String, to: String): EitherT[IO, ConvertError, BigDecimal] = {
     for {
       cachedRates <- getFromCache(from)
