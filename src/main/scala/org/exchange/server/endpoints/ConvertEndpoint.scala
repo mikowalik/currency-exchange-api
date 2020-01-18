@@ -4,14 +4,15 @@ import cats.effect.IO
 import io.circe.generic.auto._
 import org.exchange.Logging
 import org.exchange.logic.ConvertService
-import org.exchange.logic.errors.{ConvertError, ExchangeRatesNotAvailableError}
+import org.exchange.logic.errors.{BaseCurrencyNotSupportedError, ConvertError, RatesIOResponseError, ToCurrencyNotSupportedError}
 import org.exchange.model.{ConvertInput, ConvertOutput}
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.dsl.io._
 
 object ConvertEndpointMessages {
-  val ExchangeRatesNotAvailableErrorMessage = "An error occurred during communication with exchangeratesapi.io. Please try again later..."
+  val RatesIOResponseErrorMessage = "An error occurred during communication with exchangeratesapi.io. Please try again later..."
+  def CurrencyNotSupportedErrorMessage(currency: String) = s"Requested currency: '$currency' is not supported"
   val ToDoError = """ToDo error occurred, sorry ¯\_(ツ)_/¯"""
   val UnexpectedError = "Unexpected error..."
 }
@@ -30,9 +31,15 @@ class ConvertEndpoint(convertService: ConvertService) extends Logging {
             .flatMap {
               case Right(expectedOutput) => expectedOutput match {
                 case Right(output) => Ok(output)
-                case Left(ExchangeRatesNotAvailableError) =>
-                  val _ = logger.error("ExchangeRatesNotAvailableError")
-                  ServiceUnavailable(ConvertEndpointMessages.ExchangeRatesNotAvailableErrorMessage)
+                case Left(BaseCurrencyNotSupportedError(currency)) =>
+                  val _ = logger.error(s"$BaseCurrencyNotSupportedError: $currency")
+                  BadRequest(ConvertEndpointMessages.CurrencyNotSupportedErrorMessage(currency))
+                case Left(ToCurrencyNotSupportedError(currency)) =>
+                  val _ = logger.error(s"$ToCurrencyNotSupportedError: $currency")
+                  BadRequest(ConvertEndpointMessages.CurrencyNotSupportedErrorMessage(currency))
+                case Left(RatesIOResponseError(t)) =>
+                  val _ = logger.error("RatesIOResponseError: ", t)
+                  ServiceUnavailable(ConvertEndpointMessages.RatesIOResponseErrorMessage)
                 case Left(e) =>
                   val _ = logger.error(e.toString)
                   InternalServerError(ConvertEndpointMessages.ToDoError)

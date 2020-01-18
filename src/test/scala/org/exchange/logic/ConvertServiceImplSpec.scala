@@ -3,8 +3,8 @@ package org.exchange.logic
 import cats.data.EitherT
 import cats.effect.IO
 import org.exchange.TestData
-import org.exchange.logic.errors.{ConvertError, ExchangeRatesNotAvailableError}
-import org.exchange.logic.repo.RatesProvider
+import org.exchange.logic.errors.{ConvertError, ExampleError}
+import org.exchange.logic.repo.RateProvider
 import org.exchange.model.ConvertOutput
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -15,7 +15,7 @@ class ConvertServiceImplSpec extends AnyFunSuite with Matchers with TestData {
 
     val rate = BigDecimal("2.0")
 
-    val provider = new RatesProvider {
+    val provider = new RateProvider {
       override def getRate(from: String, to: String): EitherT[IO, ConvertError, BigDecimal] = EitherT.rightT(rate)
     }
 
@@ -32,22 +32,22 @@ class ConvertServiceImplSpec extends AnyFunSuite with Matchers with TestData {
 
   test("Forward expected error from provider") {
 
-    val provider = new RatesProvider {
-      override def getRate(from: String, to: String): EitherT[IO, ConvertError, BigDecimal] = EitherT.leftT(ExchangeRatesNotAvailableError)
+    val provider = new RateProvider {
+      override def getRate(from: String, to: String): EitherT[IO, ConvertError, BigDecimal] = EitherT.leftT(ExampleError)
     }
 
     val service = new ConvertServiceImpl(provider)
 
     val result = service.convert(exampleInput).value.unsafeRunSync()
 
-    result shouldEqual Left(ExchangeRatesNotAvailableError)
+    result shouldEqual Left(ExampleError)
   }
 
   test("Forward unexpected error from provider") {
 
     val e = new Exception("Unexpected exception")
 
-    val provider = new RatesProvider {
+    val provider = new RateProvider {
       override def getRate(from: String, to: String): EitherT[IO, ConvertError, BigDecimal] = EitherT.liftF(IO.raiseError(e))
     }
 

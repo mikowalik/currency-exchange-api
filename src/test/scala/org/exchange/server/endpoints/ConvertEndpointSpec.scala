@@ -6,7 +6,7 @@ import io.circe.generic.auto._
 import io.circe.parser._
 import org.exchange.TestData
 import org.exchange.logic.ConvertService
-import org.exchange.logic.errors.{ConvertError, ExchangeRatesNotAvailableError}
+import org.exchange.logic.errors.{ConvertError, ExampleError}
 import org.exchange.model.{ConvertInput, ConvertOutput}
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
@@ -46,9 +46,9 @@ class ConvertEndpointSpec extends AnyFunSuite
 
   test("Forward expected error from service") {
 
-    val serviceOutput = IO(Left(ExchangeRatesNotAvailableError))
+    val serviceOutput = IO(Left(ExampleError))
     val expectedStatus: Status = ServiceUnavailable
-    val expectedResponse: String = ConvertEndpointMessages.ExchangeRatesNotAvailableErrorMessage
+    val expectedResponse: String = ConvertEndpointMessages.ToDoError
 
     stringBasedTest(serviceOutput, expectedStatus, expectedResponse)
   }
