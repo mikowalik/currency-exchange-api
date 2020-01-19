@@ -14,7 +14,6 @@ trait BaseRatesProvider {
   def getRates(from: String): EitherT[IO, ConvertError, RatesIOResponse]
 }
 
-//FIX ME tests
 class HttpBaseRatesProvider(client: Client[IO]) extends BaseRatesProvider {
   override def getRates(from: String): EitherT[IO, ConvertError, RatesIOResponse] = {
     for {

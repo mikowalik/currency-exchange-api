@@ -1,8 +1,16 @@
-name := "currency-exchange-api"
+ThisBuild / version := "1.0"
+ThisBuild / scalaVersion := "2.12.9"
 
-version := "1.0"
+val ItTest = config("it") extend(Test)
 
-scalaVersion := "2.12.9"
+lazy val root = (project in file("."))
+  .settings(
+    name := "currency-exchange-api",
+    libraryDependencies ++= dependencies,
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
+  )
+  .configs(ItTest)
+  .settings(inConfig(ItTest)(Defaults.itSettings))
 
 val http4sVersion = "0.20.15"
 val logbackVersion = "1.2.3"
@@ -16,7 +24,7 @@ val scalaTestVersion = "3.2.0-M2"
 
 resolvers += Resolver.sonatypeRepo("snapshots")
 
-libraryDependencies ++= Seq(
+val dependencies = Seq(
   "org.http4s" %% "http4s-dsl" % http4sVersion,
   "org.http4s" %% "http4s-blaze-server" % http4sVersion,
   "org.http4s" %% "http4s-blaze-client" % http4sVersion,
@@ -33,13 +41,12 @@ libraryDependencies ++= Seq(
   "com.github.cb372" %% "scalacache-core" % scalacacheVersion,
   "com.github.cb372" %% "scalacache-cats-effect" % scalacacheVersion,
   "com.github.cb372" %% "scalacache-caffeine" % scalacacheVersion
-)
-
-libraryDependencies ++= Seq(
+) ++ Seq(
   "org.http4s" %% "http4s-blaze-client" % http4sVersion % Test,
   "org.scalacheck" %% "scalacheck" % scalaCheckVersion % Test,
   "org.scalatest" %% "scalatest" % scalaTestVersion % Test
 )
+
 
 scalacOptions ++= Seq(
   "-deprecation",                      // Emit warning and location for usages of deprecated APIs.
@@ -78,5 +85,3 @@ scalacOptions ++= Seq(
   "-Ywarn-unused:privates",            // Warn if a private member is unused.
   "-Ywarn-value-discard",               // Warn when non-Unit expression results are unused.
 )
-
-addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full)
