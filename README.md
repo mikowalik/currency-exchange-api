@@ -29,8 +29,8 @@ sbt it:test
 ```
 
 ## Possible improvements
-0. Wrapping raw types - introducing ADT
 1. Retrying requests to api.exchangeratesapi.io
 2. Better error handling
 3. Tagless final? I didn't use Tagless final due to Premature Indirection - i know i wont be changing my effects, but even now implementing tagless final should'n be difficult. 
-4. Better README :)
+4. Rafactor error interpretation in ConvertEndpoint 
+5. Better README :)

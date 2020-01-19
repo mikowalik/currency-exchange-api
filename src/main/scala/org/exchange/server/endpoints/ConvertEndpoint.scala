@@ -1,18 +1,18 @@
 package org.exchange.server.endpoints
 
 import cats.effect.IO
-import io.circe.generic.auto._
 import org.exchange.Logging
 import org.exchange.logic.ConvertService
 import org.exchange.logic.errors.{BaseCurrencyNotSupportedError, ConvertError, RatesIOResponseError, ToCurrencyNotSupportedError}
-import org.exchange.model.{ConvertInput, ConvertOutput}
+import org.exchange.model.{ConvertInput, ConvertOutput, Currency}
+import org.exchange.server.endpoints.json.JsonFormats._
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.dsl.io._
 
 object ConvertEndpointMessages {
   val RatesIOResponseErrorMessage = "An error occurred during communication with exchangeratesapi.io. Please try again later..."
-  def CurrencyNotSupportedErrorMessage(currency: String) = s"Requested currency: '$currency' is not supported"
+  def CurrencyNotSupportedErrorMessage(currency: Currency) = s"Requested currency: '${currency.value}' is not supported"
   val ToDoError = """ToDo error occurred, sorry ¯\_(ツ)_/¯"""
   val UnexpectedError = "Unexpected error..."
 }

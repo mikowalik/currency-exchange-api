@@ -5,7 +5,7 @@ import cats.effect.IO
 import org.exchange.TestData
 import org.exchange.logic.errors.{ConvertError, ExampleError}
 import org.exchange.logic.repo.RateProvider
-import org.exchange.model.ConvertOutput
+import org.exchange.model.{Amount, ConvertOutput, Currency, Rate}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
@@ -13,10 +13,10 @@ class ConvertServiceImplSpec extends AnyFunSuite with Matchers with TestData {
 
   test("Correct calculation") {
 
-    val rate = BigDecimal("2.0")
+    val rate = Rate(BigDecimal("2.0"))
 
     val provider = new RateProvider {
-      override def getRate(from: String, to: String): EitherT[IO, ConvertError, BigDecimal] = EitherT.rightT(rate)
+      override def getRate(from: Currency, to: Currency): EitherT[IO, ConvertError, Rate] = EitherT.rightT(rate)
     }
 
     val service = new ConvertServiceImpl(provider)
@@ -25,7 +25,7 @@ class ConvertServiceImplSpec extends AnyFunSuite with Matchers with TestData {
 
     result shouldEqual Right(ConvertOutput(
       exchange = rate,
-      amount = BigDecimal("205.2"),
+      amount = Amount(BigDecimal("205.2")),
       original = exampleInput.amount
     ))
   }
@@ -33,7 +33,7 @@ class ConvertServiceImplSpec extends AnyFunSuite with Matchers with TestData {
   test("Forward expected error from provider") {
 
     val provider = new RateProvider {
-      override def getRate(from: String, to: String): EitherT[IO, ConvertError, BigDecimal] = EitherT.leftT(ExampleError)
+      override def getRate(from: Currency, to: Currency): EitherT[IO, ConvertError, Rate] = EitherT.leftT(ExampleError)
     }
 
     val service = new ConvertServiceImpl(provider)
@@ -48,7 +48,7 @@ class ConvertServiceImplSpec extends AnyFunSuite with Matchers with TestData {
     val e = new Exception("Unexpected exception")
 
     val provider = new RateProvider {
-      override def getRate(from: String, to: String): EitherT[IO, ConvertError, BigDecimal] = EitherT.liftF(IO.raiseError(e))
+      override def getRate(from: Currency, to: Currency): EitherT[IO, ConvertError, Rate] = EitherT.liftF(IO.raiseError(e))
     }
 
     val service = new ConvertServiceImpl(provider)

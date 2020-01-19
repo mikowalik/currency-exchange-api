@@ -1,8 +1,8 @@
 package org.exchange.model
 
 final case class ConvertOutput(
-  exchange: BigDecimal,
-  amount: BigDecimal,
-  original: BigDecimal
+  exchange: Rate,
+  amount: Amount,
+  original: Amount
 )
 

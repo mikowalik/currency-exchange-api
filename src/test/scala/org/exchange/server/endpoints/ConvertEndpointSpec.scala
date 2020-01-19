@@ -2,12 +2,13 @@ package org.exchange.server.endpoints
 
 import cats.data.EitherT
 import cats.effect.IO
-import io.circe.generic.auto._
+import io.circe.Decoder.Result
 import io.circe.parser._
+import io.circe.{Decoder, Encoder, HCursor, Json}
 import org.exchange.TestData
 import org.exchange.logic.ConvertService
 import org.exchange.logic.errors.{ConvertError, ExampleError}
-import org.exchange.model.{ConvertInput, ConvertOutput}
+import org.exchange.model.{Amount, ConvertInput, ConvertOutput, Rate}
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.client.dsl.Http4sClientDsl
@@ -47,7 +48,7 @@ class ConvertEndpointSpec extends AnyFunSuite
   test("Forward expected error from service") {
 
     val serviceOutput = IO(Left(ExampleError))
-    val expectedStatus: Status = ServiceUnavailable
+    val expectedStatus: Status = InternalServerError
     val expectedResponse: String = ConvertEndpointMessages.ToDoError
 
     stringBasedTest(serviceOutput, expectedStatus, expectedResponse)
@@ -72,9 +73,9 @@ class ConvertEndpointSpec extends AnyFunSuite
   }
 
   private val exampleConvertOutput = ConvertOutput(
-    exchange = BigDecimal("1.11"),
-    amount = BigDecimal("113.886"),
-    original = BigDecimal("102.6")
+    exchange = Rate(BigDecimal("1.11")),
+    amount = Amount(BigDecimal("113.886")),
+    original = Amount(BigDecimal("102.6"))
   )
 
   private val correctExampleInputJson: String =
@@ -94,6 +95,30 @@ class ConvertEndpointSpec extends AnyFunSuite
       |   "original": 102.6
       |}
       |""".stripMargin
+
+  implicit val outputDecoder: Decoder[ConvertOutput] = new Decoder[ConvertOutput] {
+    override def apply(c: HCursor): Result[ConvertOutput] = {
+      for {
+        exchange <- c.downField("exchange").as[BigDecimal]
+        amount <- c.downField("amount").as[BigDecimal]
+        original <- c.downField("original").as[BigDecimal]
+      } yield ConvertOutput(
+        exchange = Rate(exchange),
+        amount = Amount(amount),
+        original = Amount(original)
+      )
+    }
+  }
+
+  implicit val inputEncoder: Encoder[ConvertInput] = new Encoder[ConvertInput] {
+    override def apply(o: ConvertInput): Json = {
+      Json.obj(
+        "fromCurrency" -> Json.fromString(o.fromCurrency.value),
+        "toCurrency" -> Json.fromString(o.toCurrency.value),
+        "amount" -> Json.fromBigDecimal(o.amount.value)
+      )
+    }
+  }
 
   private def stringBasedTest(
     serviceOutput: IO[Either[ConvertError, ConvertOutput]],

@@ -1,6 +1,7 @@
 package org.exchange.logic.repo.impl.ratesio.base
 
 import cats.effect.{ContextShift, IO}
+import org.exchange.model.Currency
 import org.http4s.client.{Client, JavaNetClientBuilder}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
@@ -18,7 +19,7 @@ class HttpBaseRatesProviderTest extends AnyFunSuite with Matchers {
 
     val provider = new HttpBaseRatesProvider(httpClient)
 
-    val result = provider.getRates("PLN").value.unsafeRunSync()
+    val result = provider.getRates(Currency("PLN")).value.unsafeRunSync()
 
     result.isRight shouldEqual true
     result.getOrElse(???).rates.size should be > 30

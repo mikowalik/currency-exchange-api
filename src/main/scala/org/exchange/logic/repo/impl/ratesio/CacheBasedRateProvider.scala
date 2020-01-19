@@ -7,13 +7,14 @@ import org.exchange.logic.errors.{ConvertError, ToCurrencyNotSupportedError}
 import org.exchange.logic.repo.RateProvider
 import org.exchange.logic.repo.impl.ratesio.base.BaseRatesProvider
 import org.exchange.logic.repo.impl.ratesio.cache.CacheManager
+import org.exchange.model.{Currency, Rate}
 
 class CacheBasedRateProvider(
   baseRatesProvider: BaseRatesProvider,
   cacheManager: CacheManager
 ) extends RateProvider with Logging {
 
-  override def getRate(from: String, to: String): EitherT[IO, ConvertError, BigDecimal] = {
+  override def getRate(from: Currency, to: Currency): EitherT[IO, ConvertError, Rate] = {
     for {
       cachedRates <- getFromCache(from)
       _ <- EitherT.rightT[IO, ConvertError](logger.debug(s"Searching for base: $from in cache returned ${cachedRates.size} rates"))
@@ -23,7 +24,7 @@ class CacheBasedRateProvider(
     } yield rate
   }
 
-  private def getFromCache(base: String): EitherT[IO, ConvertError, Map[String, BigDecimal]] = {
+  private def getFromCache(base: Currency): EitherT[IO, ConvertError, Map[Currency, Rate]] = {
     EitherT.liftF(
       cacheManager
         .read(base)
@@ -38,15 +39,15 @@ class CacheBasedRateProvider(
     )
   }
 
-  private def getRatesRegardingCache(cachedRates: Map[String, BigDecimal], base: String): EitherT[IO, ConvertError, Map[String, BigDecimal]] = {
+  private def getRatesRegardingCache(cachedRates: Map[Currency, Rate], base: Currency): EitherT[IO, ConvertError, Map[Currency, Rate]] = {
     if (cachedRates.isEmpty) baseRatesProvider.getRates(base).map(_.rates)
     else EitherT.rightT(cachedRates)
   }
 
   private def saveRatesRegardingCache(
-    cachedRates: Map[String, BigDecimal],
-    usedRates: Map[String, BigDecimal],
-    base: String): EitherT[IO, ConvertError, Unit] = {
+    cachedRates: Map[Currency, Rate],
+    usedRates: Map[Currency, Rate],
+    base: Currency): EitherT[IO, ConvertError, Unit] = {
 
     if (cachedRates.isEmpty)
       EitherT.liftF(
